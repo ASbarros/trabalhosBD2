@@ -1,0 +1,125 @@
+1)
+DECLARE
+    somatorio NUMBER := 0;
+    soma NUMBER := 0;
+    numhang Hangar.numhang%TYPE;
+    numhangsum armazenado_em.valalu%TYPE;
+    CURSOR c_hang IS
+        SELECT DISTINCT h.numhang as num
+        FROM hangar h, armazenado_em a
+        WHERE a.numhang = h.numhang
+        AND a.datafim >sysdate
+        ORDER BY h.numhang;
+    CURSOR c_somatorio(num hangar.numhang%type)  IS
+        SELECT a.valalu, h.numhang
+        FROM hangar h, armazenado_em a
+        WHERE a.numhang = num
+        AND a.datafim > sysdate
+        ORDER BY h.numhang;
+BEGIN
+    OPEN c_hang;
+    LOOP
+        FETCH c_hang INTO numhang;
+        EXIT WHEN c_hang % NOTFOUND;
+        OPEN c_somatorio(NUMHANG);
+        soma := 0;
+        LOOP
+            FETCH c_somatorio INTO somatorio, numhangsum;
+            EXIT WHEN c_somatorio % NOTFOUND;
+               soma := soma + somatorio;
+        END LOOP;
+        CLOSE c_somatorio;
+        DBMS_OUTPUT.PUT_LINE('Hangar: ' || numhang || ' faturamento: ' || soma);
+    END LOOP;
+    CLOSE c_hang;
+END;
+
+2)
+select nvl2(nomepes, 'Esta cadastrado no banco', 'Não esta cadastrado no banco') from pessoa
+
+3)
+create or replace function sempessoa(num pessoa.numprop%type)
+return boolean is
+proprietario number := 0;
+begin
+select count(*)
+into proprietario
+from pessoa p
+where p.numprop = num;
+if proprietario = 0 then
+   return true;
+else
+   return false;
+end if;
+
+create or replace function semcorporacao(num corporacao.numprop%type)
+return boolean is
+proprietario number := 0;
+begin
+select count(*)
+into proprietario
+from corporacao c
+where c.numprop = num;
+if proprietario = 0 then
+   return true;
+else
+   return false;
+end if;
+
+create or replace function comprop(num proprietario.numprop%type)
+return number is
+
+begin
+
+if not sempessoa(num) and semcorporacao(num) then
+   return 0;
+elif sempessoa(num) and not semcorporacao(num) then
+   return 1;
+else
+   return 2;
+end;
+
+
+
+
+select nregavi,
+       decode(count(distinct numprop), 0, 'sem proprietario',
+                                       1, 'um proprietario',
+                                       2, 'dois proprietario',
+                                          'varios proprietarios') num_proprietario
+       decode(comprop(possui.numprop), 0, 'aviao pessoal',
+                                       1, 'aviao corporativo',
+                                          'aviao misto') as tipo
+from aviao natural join possui
+group by nregavi;
+
+4)
+CREATE OR REPLACE FUNCTION codhangar
+RETURN NUMBER IS
+
+ CURSOR ULTIMO_ID IS
+
+ TYPE vetor_numeros IS TABLE OF hangar.numrang%TYPE INDEX BY BINARY_INTEGER;
+
+ vetor vetor_numeros;
+
+BEGIN
+ OPEN  ULTIMO_ID;
+ FETCH ULTIMO_ID BULK COLLECT INTO vetor;
+ CLOSE ULTIMO_ID;
+
+ RETURN (vetor(vetor.count) + 1);
+
+END;
+
+CREATE OR REPLACE TRIGGER triger_idhangar
+BEFORE INSERT ON hangar
+FOR EACH ROW
+BEGIN 
+ :new.codhangar := triger_idhangar; 
+END; 
+
+BEGIN 
+ :new.codMen := codMen_mensalidade; 
+END; 
+5)
